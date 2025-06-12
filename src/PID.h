@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-// PID Controller structure
 typedef struct {
     float Kp;
     float Ki;
@@ -12,18 +11,14 @@ typedef struct {
 
     float integral;
     float prev_error;
-    float output;
-    float out_min;
-    float out_max;
+
+    uint16_t out_min;
+    uint16_t out_max;
+    uint16_t output;
 } PIDController;
 
-// Initializes the PID controller with parameters
-void PID_Init(PIDController *pid, float Kp, float Ki, float Kd, float dt, float out_min, float out_max);
-
-// Computes the new control value
-float PID_Compute(PIDController *pid, float setpoint, float measurement);
-
-// Resets the PID controller internal state
+void PID_Init(PIDController *pid, float Kp, float Ki, float Kd, float dt, uint16_t out_min, uint16_t out_max);
+uint16_t PID_Compute(PIDController *pid, uint16_t setpoint, uint16_t measurement);
 void PID_Reset(PIDController *pid);
 
 #endif
