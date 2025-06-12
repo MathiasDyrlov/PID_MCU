@@ -23,7 +23,7 @@ ISR(ADC_vect) {
 int main(void) {
     UART_Init(9600);
     PWM_Init(PWM_OC1A); // Initialize PWM on OC1A (PB5) -- for generator control
-    PWM_Init(PWM_OC1B); // Initialize PWM on OC1B (PB6) -- for mateo :*
+   // PWM_Init(PWM_OC1B); // Initialize PWM on OC1B (PB6) -- for mateo :*
     ADC_Init(0);
     sei();                               // Enable global interrupts
     ADCSRA |= (1 << ADSC);       // Start first conversion
@@ -34,7 +34,7 @@ int main(void) {
     PID_Init(&pid, 1.5f, 25.0f, 0.00f, 0.01f, 0, 1023); // Example parameters
     uint16_t setpoint = 512; // Desired setpoint (e.g., 50% of 10-bit range)
     uint16_t Duty_Generator = 512; // Initialize duty cycle to 50% (512 for 10-bit resolution)
-    uint16_t Duty_Mateo = 358; // Initialize duty cycle for mateo to 35% (358 for 10-bit resolution)
+    //uint16_t Duty_Mateo = 358; // Initialize duty cycle for mateo to 35% (358 for 10-bit resolution)
     PWM_SetDutyCycle(PWM_OC1A, Duty_Generator); // Set initial PWM duty cycle
     while (1) {
         if(adc_ready) {
