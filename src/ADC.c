@@ -30,6 +30,9 @@ void ADC_Init(unsigned int channel) {
     ADCSRA |= (1 << ADEN) | (1 << ADIE); //(1 << ADATE)
 
 
-    DIDR0 = (1<<channel);
+    //DIDR0 = (1<<channel);
+    // Disable digital input on ADC pins to reduce power consumption
+    DIDR0 |= (1 << ADC0D) | (1 << ADC1D) | (1 << ADC2D); 
+
 }
 
