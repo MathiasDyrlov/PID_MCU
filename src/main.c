@@ -97,17 +97,17 @@ void MPPT_Update(uint16_t V, uint16_t Vprev, float I, float *Pprev, uint16_t *MP
     int16_t deltaV = V - Vprev;
 
     if (deltaP == 0 || deltaV == 0) {
-        return; // No meaningful change — do nothing
+        return;                         // No meaningful change — do nothing
     }
 
-    // P&O logic using sign of deltaP and deltaV
+                                        // P&O logic using sign of deltaP and deltaV
     if (deltaP * deltaV > 0) {
         if (*MPPTDuty <= TOP_PV) {
-            (*MPPTDuty)++; // Move in the same direction, but don't exceed top_PV
+            (*MPPTDuty)++;              // Move in the same direction, but don't exceed top_PV
         }
     } else {
         if (*MPPTDuty > 0) {
-            (*MPPTDuty)--; // Reverse direction, but don't go below 0
+            (*MPPTDuty)--;              // Reverse direction, but don't go below 0
         }
     }
 }
@@ -116,7 +116,7 @@ void MPPT_Update(uint16_t V, uint16_t Vprev, float I, float *Pprev, uint16_t *MP
 
 
 int main(void) {
-    uart0_init(MYUBRRF1);
+    uart0_init(MYUBRRF1);               // Initialize UART with defined baud rate - 115220 in UART.h
     ADC_Init(0);
 
     sei();                            	// Enable global interrupts
@@ -128,27 +128,29 @@ int main(void) {
 
     // Initialize PWM OUTPUTS
 	uint16_t TOP_GEN = 7999;
-    uint16_t Duty_Generator = 4000; // Duty cycle at 50% of TOP_GEN
+    uint16_t Duty_Generator = 4000;     // Duty cycle at 50% of TOP_GEN
 	PWM_Init(PWM_PB5, TOP_GEN);         // Initialize PWM on OC1A (PB5) with a top value of 99 for 20 kHz frequency
 	PWM_SetDutyCycle(PWM_PB5, 
               Duty_Generator);
 
-    // Initialize PWM for MPPT control
-    uint16_t TOP_PV = 159; // Top value for MPPT PWM (for 100 kHz frequency) prescaler 1
-    uint16_t MPPTDuty = 80; // Initial duty cycle for MPPT at 50% of TOP_GEN
-    PWM_Init(PWM_PE3, TOP_PV);         // Initialize PWM on OC1A (PB7) with a top value of 99 for 20 kHz frequency
+                                        // Initialize PWM for MPPT control
+    uint16_t TOP_PV = 159;              // Top value for MPPT PWM (for 100 kHz frequency) prescaler 1
+    uint16_t MPPTDuty = 80;             // Initial duty cycle for MPPT at 50%
+    PWM_Init(PWM_PE3, TOP_PV);          
 	PWM_SetDutyCycle(PWM_PE3, 
               MPPTDuty);
 	
-	//uint16_t TOP_BOOST = 799;	
-    //uint16_t DUTY_BOOST = 400;     	// Initialize duty cycle for mateo to 67%
-	//PWM_Init(PWM_PB6, TOP_BOOST); 	// Initialize PWM on OC1B (PB6) with a top value of 99 for 20 kHz frequency    
-    //         DUTY_BOOST);      		// Set initial PWM duty cycle for mateo
+	uint16_t TOP_BOOST = 799;	
+    uint16_t DUTY_BOOST = 535;     	    // Initialize duty cycle for mateo to 67%
+	PWM_Init(PWM_PH3, TOP_BOOST); 	       
+    PWM_SetDutyCycle(PWM_PH3, 
+    DUTY_BOOST);
 	
-	//uint16_t TOP_BUCK = 100; // 
-    //UINT16_T DUTY_BUCK = 32;       	// Initialize duty cycle for mateo to 35%
-    //PWM_SetDutyCycle(PWM_PB7, 
-    //DUTY_BUCK);      					// Set initial PWM duty cycle for mateo
+	uint16_t TOP_BUCK = 799;            // Top value for buck converter PWM (for 20 kHz frequency)
+    uint16_t DUTY_BUCK = 280;       	// Initialize duty cycle for mateo to 35%
+    PWM_Init(PWM_PL3, TOP_BUCK);        
+    PWM_SetDutyCycle(PWM_PL3, 
+    DUTY_BUCK);      					
 	
 										// Initialize PID controller with example parameters
     PIDController pid;
@@ -157,10 +159,10 @@ int main(void) {
     uint16_t setpoint = 512;      		// Setpoint for PID controller (example value, adjust as needed)
 	
 	// Variables for MPPT Algorithm
-	int16_t V = 0; 					// Voltage measurement
-    int16_t Vprev = 0; 				// Previous voltage measurement
-    float I = 0.0; 					// Current measurement
-    float Pprev = 0.0; 				// Previous power calculation
+	int16_t V = 0; 					    // Voltage measurement
+    int16_t Vprev = 0; 				    // Previous voltage measurement
+    float I = 0.0; 					    // Current measurement
+    float Pprev = 0.0; 				    // Previous power calculation
 
 
     // Main loop
