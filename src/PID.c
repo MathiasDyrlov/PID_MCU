@@ -1,3 +1,20 @@
+/*---------------------------------------------------------
+Purpose: PID Controller module
+Input: 
+    - PID_Init: pointer to PIDController struct, PID constants, sample time, output bounds
+    - PID_Compute: setpoint and actual measurement
+    - PID_Reset: pointer to PIDController struct
+Output: 
+    - PID_Compute returns the clamped PID output
+    - PID_Init and PID_Reset modify the struct in-place
+Uses: requires PID.h
+Author: Mathias Columbus Dyrløv Madsen
+University: DTU
+Version: 1.0
+Creation Date and year: 09/06-2025 (European calendar)
+Updated to current version: 09/06-2025
+---------------------------------------------------------*/
+
 #include "PID.h"
 
 void PID_Init(PIDController *pid, float Kp, float Ki, float Kd, float dt, uint16_t out_min, uint16_t out_max) {

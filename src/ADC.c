@@ -5,9 +5,9 @@ Output: the number scaled via the scalefunction
 Uses: includes ADC.h
 Author: Mathias Columbus Dyrløv Madsen
 University: DTU
-Version: 1.1
+Version: 1.2
 Creation Date and year:02/05-2024 (European calender)
-Updated to current version: 15/01-2025
+Updated to current version: 14/06-2025
 -----------------------------------------------------*/
 
 #include <avr/io.h>
@@ -31,7 +31,8 @@ void ADC_Init(unsigned int channel) {
 
 
     //DIDR0 = (1<<channel);
-    // Disable digital input on ADC pins to reduce power consumption
+    
+    // Enable digital input on ADC0, ADC1, and ADC2 for this specific application
     DIDR0 |= (1 << ADC0D) | (1 << ADC1D) | (1 << ADC2D); 
 
 }

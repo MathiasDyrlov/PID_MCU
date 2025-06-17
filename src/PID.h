@@ -1,3 +1,13 @@
+/*---------------------------------------------------------
+Purpose: Header file for PID controller module
+Uses: Include in main.c to access PID_Init, PID_Compute, and PID_Reset
+Author: Mathias Columbus Dyrløv Madsen
+University: DTU
+Version: 1.0
+Date and year: 09/06-2025 (European calendar)
+Updated to current version: 09/06-2025
+---------------------------------------------------------*/
+
 #ifndef PID_H
 #define PID_H
 

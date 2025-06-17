@@ -1,7 +1,17 @@
+/*---------------------------------------------------------
+Purpose: Header file for PWM control using AVR timers
+Uses: Used in conjunction with PWM.c, include in main.c or relevant source
+Author: Mathias Columbus Dyrløv Madsen
+University: DTU
+Version: 1.0
+Date and year: 10/06-2025 (European calendar)
+---------------------------------------------------------*/
+
 #ifndef PWM_H
 #define PWM_H
 
 #include <avr/io.h>
+
 
 typedef enum {
     PWM_PB5, // OC1A
