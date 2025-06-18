@@ -48,8 +48,8 @@ Notes:
 #include <stdbool.h>
 
 // Define the number of ADC channels and their corresponding pins
-#define NUM_CHANNELS 3
-volatile uint8_t adc_channels[NUM_CHANNELS] = {0, 1, 2}; // ADC0, ADC1, ADC2
+#define NUM_CHANNELS 5
+volatile uint8_t adc_channels[NUM_CHANNELS] = {0, 1, 2, 3, 4}; // ADC0, ADC1, ADC2
 volatile uint16_t adc_values[NUM_CHANNELS];
 volatile uint8_t current_channel = 0;
 volatile bool adc_ready = false;      // Flag to indicate ADC conversion is ready
@@ -58,12 +58,57 @@ volatile bool adc_ready = false;      // Flag to indicate ADC conversion is read
 volatile char received_char = 0;
 volatile char command = 'S'; // Variable to store received command
 
+// Define command types for better readability
+// These can be used to identify the type of command received from UART
 
+volatile bool command_trim = false;
+volatile bool command_gen_run = false;
+volatile uint16_t trim_value = 0;
 
+volatile uint8_t trim_buf[4];
+volatile uint8_t trim_index = 0;
+volatile bool receiving_trim = false;
+
+// UART receive interrupt service routine
+// This ISR is triggered when a character is received over UART
 ISR(USART0_RX_vect) {
-    command = UDR0;
+    char received = UDR0;
 
+    if (receiving_trim) {
+        if (trim_index < 4) {
+            trim_buf[trim_index++] = received;
+        }
+        if (trim_index == 4) {
+            // Convert ASCII digits to integer
+            trim_value = (trim_buf[0] - '0') * 1000 +
+                         (trim_buf[1] - '0') * 100 +
+                         (trim_buf[2] - '0') * 10 +
+                         (trim_buf[3] - '0');
+
+            command_trim = true;     // Set flag for main loop
+            receiving_trim = false; // Reset state
+            trim_index = 0;
+        }
+    } else {
+        switch (received) {
+            case 'T':
+                receiving_trim = true;
+                trim_index = 0;
+                break;
+            case 'S':
+                command_gen_run = true;
+                break;
+            case 'X':
+                command_gen_run = false;
+                break;
+            default:
+                // Optionally handle unknown characters
+                break;
+        }
+    }
 }
+
+
 
 
 
@@ -127,6 +172,7 @@ int main(void) {
     ADCSRA |= (1 << ADSC);            	// Start real first conversion
 
     // Initialize PWM OUTPUTS
+    float ADC_GEN = 0.0;                // ADC value for generator control
 	uint16_t TOP_GEN = 7999;
     uint16_t Duty_Generator = 4000;     // Duty cycle at 50% of TOP_GEN
 	PWM_Init(PWM_PB5, TOP_GEN);         // Initialize PWM on OC1A (PB5) with a top value of 99 for 20 kHz frequency
@@ -168,17 +214,24 @@ int main(void) {
     // Main loop
     // Continuously check for ADC conversion completion and update PWM duty cycle
     while (1) {
+        
         if(adc_ready) {
+            ADC_GEN = adc_values[0]*1.0545; // Scale ADC Value to compensate for loss in optococoupler
 
-            // Control command from UART RX
-            if (command == 'S')
-            {
-                Duty_Generator = PID_Compute(&pid, setpoint, adc_values[0]);
+            if(command_trim == true) {
+                // If a trim command is received, adjust the setpoint
+                setpoint = trim_value; // Set the new setpoint based on received trim value
+                command_trim = false;  // Reset the command flag
             }
-            else if (command == 'X')
-            {
-               Duty_Generator = 0; // Stop PWM output if command is 'X' 
+           
+            if (command_gen_run == true) {
+                // Run generator control logic
+                Duty_Generator = PID_Compute(&pid, setpoint, ADC_GEN); // Compute PID output
+            } else if (command_gen_run == false) {
+                // If command is not to run generator, set duty cycle to 0
+                Duty_Generator = 0;
             }
+            
             
             // Update PWM duty cycle based on PID output
             PWM_SetDutyCycle(PWM_PB5, Duty_Generator); 
@@ -193,7 +246,7 @@ int main(void) {
             // Transmit ADC value and PWM duty cycle over UART
             
             UART_TransmitString("A");
-            UART_TransmitInt(adc_values[0]);        // ADC0
+            UART_TransmitInt(ADC_GEN);        // ADC0
             UART_TransmitString(";");
             UART_TransmitInt(adc_values[1]);        // ADC1
             UART_TransmitString(";");
@@ -205,6 +258,11 @@ int main(void) {
 
             // Same casting for MPPTDuty to be safe
             UART_TransmitInt((uint16_t)(((uint32_t)MPPTDuty * 100) / TOP_PV));       // DUTY1
+            UART_TransmitString(";");
+            UART_TransmitInt(adc_values[3]);        // ADC3
+            UART_TransmitString(";");   
+            UART_TransmitInt(adc_values[4]);        // ADC4
+            
             UART_TransmitString("B");
 
 

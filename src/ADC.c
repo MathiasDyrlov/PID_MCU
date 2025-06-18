@@ -33,7 +33,7 @@ void ADC_Init(unsigned int channel) {
     //DIDR0 = (1<<channel);
     
     // Enable digital input on ADC0, ADC1, and ADC2 for this specific application
-    DIDR0 |= (1 << ADC0D) | (1 << ADC1D) | (1 << ADC2D); 
+    DIDR0 |= (1 << ADC0D) | (1 << ADC1D) | (1 << ADC2D) | (1 << ADC3D) | (1 << ADC4D);
 
 }
 

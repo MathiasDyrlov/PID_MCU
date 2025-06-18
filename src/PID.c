@@ -29,8 +29,8 @@ void PID_Init(PIDController *pid, float Kp, float Ki, float Kd, float dt, uint16
     pid->output = 0;
 }
 
-uint16_t PID_Compute(PIDController *pid, uint16_t setpoint, uint16_t measurement) {
-    float error = (float)setpoint - (float)measurement;
+uint16_t PID_Compute(PIDController *pid, float setpoint, float measurement) {
+    float error = setpoint - measurement;
     float derivative = (error - pid->prev_error) / pid->dt;
 
     // Proportional and Derivative terms
