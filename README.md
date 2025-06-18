@@ -1,5 +1,9 @@
 # PID_MCU
 
+MCU opsæt
+Der står i main hvilke ADC PWM outputs der bruges, se pinout for board.
+
+SCADA
 Gem scada filen i en vilkårlig folder
 
 Windows knap + R
