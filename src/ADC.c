@@ -22,14 +22,15 @@ void ADC_Init(unsigned int channel) {
 
    // ADMUX |= (1<<ADLAR);
 
-    // Set ADC prescaler to 64 for 250 kHz ADC clock (16 MHz / 64)
-    ADCSRA |= (1 << ADPS2) | (1 << ADPS1);
-    ADCSRA &= ~(1 << ADPS0);
+    // Set ADC prescaler to 64 for 500 kHz ADC clock (16 MHz / 64)
+    ADCSRA |= (1 << ADPS2);
+    ADCSRA |= (1 << ADPS1);
+    
 
-    // Enable ADC, Auto Triggering, and ADC Interrupt
-    ADCSRA |= (1 << ADEN) | (1 << ADIE); //(1 << ADATE)
+    // Enable ADC and ADC Interrupt
+    ADCSRA |= (1 << ADEN) | (1 << ADIE); 
 
-
+    // for single channel use, all 5 ADC channels are enabled below
     //DIDR0 = (1<<channel);
     
     // Enable digital input on ADC0, ADC1, and ADC2 for this specific application
