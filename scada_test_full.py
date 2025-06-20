@@ -79,13 +79,13 @@ class SerialMonitorApp:
             lbl.pack()
             label_var.append(lbl)
 
-        make_slider(trim_frame, "Trim 1\n(Txxxx)", self.trim_value,
+        make_slider(trim_frame, "Generator Trim", self.trim_value,
                     lambda val: self.send_trim(val, start_char='T'),
                     self.trim_labels)
-        make_slider(trim_frame, "Trim 2\n(Uxxxx)", self.trim2_value,
+        make_slider(trim_frame, "Buck Trim", self.trim2_value,
                     lambda val: self.send_trim(val, start_char='U'),
                     self.trim_labels)
-        make_slider(trim_frame, "Trim 3\n(Vxxxx)", self.trim3_value,
+        make_slider(trim_frame, "Boost Trim", self.trim3_value,
                     lambda val: self.send_trim(val, start_char='V'),
                     self.trim_labels)
 
@@ -130,7 +130,7 @@ class SerialMonitorApp:
         self.line_load, = self.ax4.plot([], [], label="Load Resistance", color="red")
         self.ax4.set_title("Load Resistance (Ohms)")
         self.ax4.set_xlabel("Time (s)")
-        self.ax4.set_ylabel("Resistance (Ω)")
+        self.ax4.set_ylabel("Resistance (Ohms)")
         self.ax4.legend(loc="upper right")
         self.ax4.grid(True)
 
@@ -235,7 +235,7 @@ class SerialMonitorApp:
             if filepath:
                 self.log_file = open(filepath, mode='w', newline='')
                 self.csv_writer = csv.writer(self.log_file)
-                self.csv_writer.writerow(["Time", "ADC0", "ADC1", "ADC2", "DUTY0", "DUTY1", "ADC3", "ADC4", "Power (W)", "Load Resistance (Ω)"])
+                self.csv_writer.writerow(["Time", "ADC0", "ADC1", "ADC2", "DUTY0", "DUTY1", "ADC3", "ADC4", "Power (W)", "Load Resistance (Ohms)"])
                 self.logging = True
                 self.toggle_btn.config(text="Stop Logging")
         else:
