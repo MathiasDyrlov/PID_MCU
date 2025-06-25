@@ -17,3 +17,30 @@ programmet kan lukkes med quit eller ctrl + c
 
 
 Kan også åbnes med Visual Code Studio
+
+
+INPUT OUTPUT ATMEGA2560
+
+GENERATOR PWM	- PB5 	- PIN D11
+
+PV PID PWM 		- PE3	- PIN D5
+
+PV MPPT PWM		- PB7	- PIN D11
+
+BOOST PWM		- PH3	- PIN D6
+
+BUCK PWM		- PL3	- PIN D46
+
+
+
+ADC GENERATOR 	- A0 
+
+ADC BUCK		- A1
+
+ADC BOOST		- A2
+
+ADC MPPTCURRENT	- A3
+
+ADC MPPTVOLTAGE	- A4
+	
+ADC PV FOR PID	- A5
