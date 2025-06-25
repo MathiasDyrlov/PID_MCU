@@ -189,11 +189,11 @@ void MPPT_Update(uint16_t V, uint16_t Vprev, float I, float *Pprev, uint16_t *Du
 
                                         // P&O logic using sign of deltaP and deltaV
     if (deltaP * deltaV > 0) {
-        if (*Duty_PV_MPPT <= TOP_PV_MPPT) {
+        if (*Duty_PV_MPPT < (178)) {
             (*Duty_PV_MPPT)++;              // Move in the same direction, but don't exceed top_PV
         }
     } else {
-        if (*Duty_PV_MPPT > 0) {
+        if (*Duty_PV_MPPT > 51) {
             (*Duty_PV_MPPT)--;              // Reverse direction, but don't go below 0
         }
     }
@@ -225,7 +225,7 @@ int main(void) {
     
     // Initialize PWM for PV control
     float ADC_PV = 0.0;                // ADC value for PV control
-    uint16_t TOP_PV = 159; 
+    uint16_t TOP_PV = 614; 
     uint16_t Duty_PV_PID = 0; // Initialize duty cycle for PV to 0%     
     PWM_Init(PWM_PE3, TOP_PV);          
 	PWM_SetDutyCycle(PWM_PE3, 
@@ -235,9 +235,9 @@ int main(void) {
     uint16_t ADC_MPPT_V = 0;              // ADC value for MPPT voltage control
     uint16_t ADC_MPPT_I = 0;              // ADC value for MPPT current control
     uint16_t TOP_PV_MPPT = 255; // top value is static at 255 in 8-bit timer mode (1kHz)
-    uint16_t Duty_PV_MPPT = 0; // Initialize duty cycle for PV to 0%     
-    PWM_Init(PWM_PB7, TOP_PV_MPPT);          
-	PWM_SetDutyCycle(PWM_PB7,
+    uint16_t Duty_PV_MPPT = 128; // Initialize duty cycle for PV to 0%     
+    PWM_Init(PWM_PB4, TOP_PV_MPPT);          
+	PWM_SetDutyCycle(PWM_PB4,
               Duty_PV_MPPT);
         
     float ADC_BOOST = 0.0;              // ADC value for boost converter control
@@ -273,8 +273,8 @@ int main(void) {
     uint16_t setpoint_boost = 512;        // Setpoint for boost converter PID controller (example value, adjust as needed)
 
     PIDController pid_PV;
-    PID_Init(&pid_PV, 0.0013f, 50.0f, 0.0f, 
-              0.0004f, 0, TOP_PV);     // Use TOP_BOOST as the PID output limit
+    PID_Init(&pid_PV, 0.0167f, 50.0f, 0.0f, 
+              0.0004f, 0, 415);     // Use TOP_BOOST as the PID output limit
     uint16_t setpoint_PV = 410;        // Setpoint for boost converter PID controller (example value, adjust as needed)
 	
     uint16_t ADC_OUTPUT = 0; // Variable to hold the output voltage from ADC channel 6
@@ -332,7 +332,7 @@ int main(void) {
                 // If command is not to run generator, set duty cycle to 0
                 Duty_Generator = 0;
                 DUTY_BUCK = 0; // Set buck converter duty cycle to 0
-                Duty_PV_MPPT = 0; // Set PV MPPT duty cycle to 0
+                Duty_PV_MPPT = 128; // Set PV MPPT duty cycle to 0
                 Duty_PV_PID = 0; // Set PV PID duty cycle to 0
                 //DUTY_BOOST = 0; // Set boost converter duty cycle to 0
             }
@@ -343,7 +343,7 @@ int main(void) {
             PWM_SetDutyCycle(PWM_PL3, DUTY_BUCK); // Update buck converter PWM duty cycle
             PWM_SetDutyCycle(PWM_PH3, DUTY_BOOST); // Update boost converter PWM duty cycle
             PWM_SetDutyCycle(PWM_PE3, Duty_PV_PID); // Update PV PID duty cycle
-            PWM_SetDutyCycle(PWM_PB7, Duty_PV_MPPT); // Update PWM duty cycle for buck converter
+            PWM_SetDutyCycle(PWM_PB4, Duty_PV_MPPT); // Update PWM duty cycle for buck converter
 
             UART_TransmitString("A");
             UART_TransmitString(";");

@@ -34,11 +34,14 @@ class SerialMonitorApp:
         self.trim3_value = tk.IntVar(value=512)
         self.trim4_value = tk.IntVar(value=410)
 
+        self.resistance_value = tk.DoubleVar(value=300.0)
+
         self.plot_data = {
             "ADC_GEN": [], "ADC_BUCK": [], "ADC_BOOST": [], "ADC_PV": [], "ADC_OUTPUT": [],
             "DUTY0": [], "DUTY1": [], "DUTY2": [], "DUTY3": [], "DUTY4": [],
-            "Power": [], "Load": [], "time": []
+            "Power": [], "time": []
         }
+
         self.start_time = datetime.datetime.now()
 
         self.setup_gui()
@@ -47,7 +50,25 @@ class SerialMonitorApp:
         self.read_thread.start()
 
     def setup_gui(self):
-        main_frame = ttk.Frame(self.master)
+        outer_frame = ttk.Frame(self.master)
+        outer_frame.pack(fill=tk.BOTH, expand=True)
+
+        canvas = tk.Canvas(outer_frame)
+        scrollbar = ttk.Scrollbar(outer_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        main_frame = ttk.Frame(scrollable_frame)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         control_frame = ttk.Frame(main_frame)
@@ -104,6 +125,12 @@ class SerialMonitorApp:
 
         ttk.Button(control_frame, text="Reset Setpoints", command=self.reset_trim).pack(anchor=tk.W, pady=5)
 
+        resistance_frame = ttk.Frame(control_frame)
+        resistance_frame.pack(anchor=tk.W, pady=10)
+        ttk.Label(resistance_frame, text="Load Resistance (Ω):", font=("Arial", 10)).pack(side=tk.LEFT)
+        resistance_entry = ttk.Entry(resistance_frame, textvariable=self.resistance_value, width=7)
+        resistance_entry.pack(side=tk.LEFT, padx=5)
+
         self.status_label = ttk.Label(control_frame, text="Disconnected", foreground="red")
         self.status_label.pack(anchor=tk.W, pady=5)
 
@@ -113,11 +140,10 @@ class SerialMonitorApp:
         self.toggle_btn.pack(anchor=tk.W, pady=10)
         ttk.Button(control_frame, text="Quit", command=self.quit_app).pack(anchor=tk.W, pady=5)
 
-        self.fig = Figure(figsize=(10, 8), dpi=100)
-        self.ax1 = self.fig.add_subplot(411)
-        self.ax2 = self.fig.add_subplot(412)
-        self.ax3 = self.fig.add_subplot(413)
-        self.ax4 = self.fig.add_subplot(414)
+        self.fig = Figure(figsize=(10, 6), dpi=100)
+        self.ax1 = self.fig.add_subplot(311)
+        self.ax2 = self.fig.add_subplot(312)
+        self.ax3 = self.fig.add_subplot(313)
 
         self.line_adc_gen, = self.ax1.plot([], [], label="ADC_GEN")
         self.line_adc_buck, = self.ax1.plot([], [], label="ADC_BUCK")
@@ -141,15 +167,9 @@ class SerialMonitorApp:
         self.line_power, = self.ax3.plot([], [], label="Power", color="darkgreen")
         self.ax3.set_title("Power Output")
         self.ax3.set_ylabel("Watts")
+        self.ax3.set_xlabel("Time (s)")
         self.ax3.legend(loc="upper right")
         self.ax3.grid(True)
-
-        self.line_load, = self.ax4.plot([], [], label="Load Resistance", color="brown")
-        self.ax4.set_title("Load Resistance")
-        self.ax4.set_ylabel("Ohms")
-        self.ax4.set_xlabel("Time (s)")
-        self.ax4.legend(loc="upper right")
-        self.ax4.grid(True)
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
@@ -208,37 +228,46 @@ class SerialMonitorApp:
             now = (datetime.datetime.now() - self.start_time).total_seconds()
             self.plot_data["time"].append(now)
 
-            voltage_gen = adc_gen * (15.0 / 512)
-            voltage_buck = adc_buck * (5.0 / 512)
-            voltage_boost = adc_boost * (15.0 / 512)
-            voltage_pv = adc_pv * (15.0 / 410)
             voltage_output = adc_output * (15.0 / 512)
+            R_load = self.resistance_value.get()
+            power = (voltage_output ** 2) / R_load if R_load > 0 else 0
 
-            current_output = voltage_output / 10.0 if voltage_output > 0 else 0
-            power = voltage_output * current_output
-            load_resistance = voltage_output / current_output if current_output > 0 else None
-            duty_gen = (duty0*100)/1023
-            duty_buck = (duty1*100)/1023
-            duty_boost = (duty2*100)/1023
-            duty_pid = (duty3*100)/1023
-            duty_mppt = (duty4*100)/255
-            
+            duty_converted = [
+                (duty0 * 100) / 1023,
+                (duty1 * 100) / 1023,
+                (duty2 * 100) / 1023,
+                (duty3 * 100) / 1023,
+                (duty4 * 100) / 255
+            ]
 
-            self.plot_data["ADC_GEN"].append(voltage_gen)
-            self.plot_data["ADC_BUCK"].append(voltage_buck)
-            self.plot_data["ADC_BOOST"].append(voltage_boost)
-            self.plot_data["ADC_PV"].append(voltage_pv)
+            self.plot_data["ADC_GEN"].append(adc_gen * (15.0 / 512))
+            self.plot_data["ADC_BUCK"].append(adc_buck * (5.0 / 512))
+            self.plot_data["ADC_BOOST"].append(adc_boost * (15.0 / 512))
+            self.plot_data["ADC_PV"].append(adc_pv * 0.0122)
             self.plot_data["ADC_OUTPUT"].append(voltage_output)
-            self.plot_data["DUTY0"].append(duty_gen)
-            self.plot_data["DUTY1"].append(duty_buck)
-            self.plot_data["DUTY2"].append(duty_boost)
-            self.plot_data["DUTY3"].append(duty_pid)
-            self.plot_data["DUTY4"].append(duty_mppt)
+
+            self.plot_data["DUTY0"].append(duty_converted[0])
+            self.plot_data["DUTY1"].append(duty_converted[1])
+            self.plot_data["DUTY2"].append(duty_converted[2])
+            self.plot_data["DUTY3"].append(duty_converted[3])
+            self.plot_data["DUTY4"].append(duty_converted[4])
             self.plot_data["Power"].append(power)
-            self.plot_data["Load"].append(load_resistance)
 
             if self.logging and self.csv_writer:
-                row = [now] + list(self.data.values()) + [power, load_resistance]
+                row = [
+                    now,
+                    self.plot_data["ADC_GEN"][-1],
+                    self.plot_data["ADC_BUCK"][-1],
+                    self.plot_data["ADC_BOOST"][-1],
+                    self.plot_data["ADC_PV"][-1],
+                    self.plot_data["ADC_OUTPUT"][-1],
+                    self.plot_data["DUTY0"][-1],
+                    self.plot_data["DUTY1"][-1],
+                    self.plot_data["DUTY2"][-1],
+                    self.plot_data["DUTY3"][-1],
+                    self.plot_data["DUTY4"][-1],
+                    power
+                ]
                 self.csv_writer.writerow(row)
 
         except Exception as e:
@@ -269,11 +298,6 @@ class SerialMonitorApp:
         self.ax3.relim()
         self.ax3.autoscale_view()
 
-        r = [v if v is not None else math.nan for v in self.plot_data["Load"][-100:]]
-        self.line_load.set_data(t, r)
-        self.ax4.relim()
-        self.ax4.autoscale_view()
-
         self.canvas.draw()
 
     def toggle_logging(self):
@@ -282,7 +306,12 @@ class SerialMonitorApp:
             if path:
                 self.log_file = open(path, mode='w', newline='')
                 self.csv_writer = csv.writer(self.log_file)
-                self.csv_writer.writerow(["Time"] + list(self.data.keys()) + ["Power (W)", "Load Resistance (Ohms)"])
+                self.csv_writer.writerow([
+                    "Time",
+                    "ADC_GEN (V)", "ADC_BUCK (V)", "ADC_BOOST (V)", "ADC_PV (V)", "ADC_OUTPUT (V)",
+                    "DUTY0 (%)", "DUTY1 (%)", "DUTY2 (%)", "DUTY3 (%)", "DUTY4 (%)",
+                    "Power (W)"
+                ])
                 self.logging = True
                 self.toggle_btn.config(text="Stop Logging")
         else:

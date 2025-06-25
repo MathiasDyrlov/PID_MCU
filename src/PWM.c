@@ -44,7 +44,7 @@ void PWM_Init(PWMChannel channel, uint16_t PWM_TOP) {
         case PWM_PB7:
             DDRD |= (1 << PB7);
             TCCR0A = (1 << COM0A1) | (1 << WGM00) | (1 << WGM01); // Fast PWM
-            TCCR0B = (1 << CS01) | (1 << CS00); // prescaler = 64 (for 8-bit PWM)
+            TCCR0B = (1 << CS00); // prescaler = 1 (for 8-bit PWM)
             OCR0A = 0;
             break;
 
@@ -52,7 +52,7 @@ void PWM_Init(PWMChannel channel, uint16_t PWM_TOP) {
         case PWM_PB4:
             DDRB |= (1 << PB4);
             TCCR2A = (1 << COM2A1) | (1 << WGM20) | (1 << WGM21); // Fast PWM
-            TCCR2B = (1 << CS20); // Prescaler = 1 (fastest)
+            TCCR2B = (1 << CS20); // Prescaler = 8 (62500 kHz for 8-bit PWM)
             OCR2A = 0;
             break;
 
