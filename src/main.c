@@ -1,18 +1,27 @@
 /*---------------------------------------------------------
 Purpose:
-    Main application for controlling PWM outputs based on ADC inputs
-    with PID regulation and MPPT (Maximum Power Point Tracking) algorithm.
-    Handles UART communication to receive commands and transmit
-    monitored data back to a PC for SCADA or other monitoring purposes.
+    Main application for regulating and monitoring a hybrid
+    power converter system using multiple PWM outputs,
+    PID controllers, and MPPT (Maximum Power Point Tracking).
+    It also supports UART communication for SCADA integration.
 
 Features:
-    - Initializes and reads multiple ADC channels via interrupt.
-    - Implements a PID controller for regulating PWM duty cycle.
-    - Runs an MPPT algorithm to optimize power extraction.
-    - Controls multiple PWM outputs using hardware timers.
-    - Communicates with a PC over UART at 115200 baud.
-    - Supports a kill switch command ('X') to disable PWM output.
-    - Transmits ADC and PWM data with header/footer markers for easy parsing.
+    - Initializes and reads 7 ADC channels using interrupts.
+    - Implements PID control for:
+        • Generator (PWM on PB5)
+        • Buck converter (PWM on PL3)
+        • Boost converter (PWM on PH3)
+        • PV regulation (PWM on PE3)
+    - Executes Perturb & Observe MPPT algorithm for PV optimization
+      (PWM on PB4 using 8-bit Timer).
+    - Supports dynamic setpoint adjustment via UART trim commands.
+    - UART interface (115200 baud) for control and telemetry:
+        • 'S' to start system
+        • 'X' to stop/kill all PWM outputs
+        • 'T', 'U', 'V', 'W' followed by 4 digits to trim setpoints
+    - Periodically transmits ADC measurements and PWM duty cycles
+      with clear markers ('A' header, 'B' footer) for easy PC parsing.
+    - PID and MPPT settings are modular and hardware-tunable.
 
 Author:
     Mathias Columbus Dyrløv Madsen
@@ -27,11 +36,21 @@ Date and Year:
     17/06-2025 (European calendar)
 
 Notes:
-    - ADC channels used: ADC0 (measurement), ADC1 (voltage), ADC2 (current).
-    - PWM outputs use Timer1 (PB5) and Timer1 (PB7).
-    - PID and MPPT parameters can be tuned for specific hardware setups.
-    - UART receive interrupt used to handle control commands asynchronously.
+    - ADC Channels:
+        [0] Generator feedback
+        [1] Buck converter voltage
+        [2] Boost converter voltage
+        [3] MPPT current input
+        [4] MPPT voltage input
+        [5] PV feedback
+        [6] System output voltage
+    - UART command structure:
+        • Single-character control or 5-byte trim: [Cmd][XXXX]
+        • All duty cycles and ADC values are transmitted in semicolon-separated format
+    - PWM configuration uses 16-bit and 8-bit timers with adjustable TOP values.
+    - Code optimized for ATmega328P or similar AVR microcontrollers.
 ---------------------------------------------------------*/
+
 
 
 //Includes libraries created for the project
@@ -62,7 +81,7 @@ volatile char command = 'S'; // Variable to store received command
 // Define command types for better readability
 // These can be used to identify the type of command received from UART
 
-volatile bool command_gen_run = false;
+volatile bool command_gen_run = false; //set true when the generator should run
 volatile bool receiving_trim = false;
 volatile char current_trim_command = '\0';
 volatile uint8_t trim_index = 0;

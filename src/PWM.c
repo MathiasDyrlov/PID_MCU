@@ -1,3 +1,14 @@
+/*---------------------------------------------------------
+Purpose: Initializes and sets duty cycle for specified PWM channels
+Input: PWM channel and desired PWM_TOP value or duty cycle
+Output: Configured PWM signal with corresponding duty cycle
+Uses: includes PWM.h
+Author: Mathias Columbus Dyrløv Madsen
+University: DTU
+Version: 1.0
+Creation Date and year: 10/06-2025 (European calendar)
+---------------------------------------------------------*/
+
 #include "PWM.h"
 #include <avr/io.h>
 
